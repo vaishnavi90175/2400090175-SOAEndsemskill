@@ -1,0 +1,45 @@
+
+name: crud-service-deployment
+
+services:
+  postgres-db:
+    image: postgres:15
+    container_name: crud-postgres
+    environment:
+      POSTGRES_DB: exam-2400090175
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - crud-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    image: vaishnavi90175/crudservice:latest
+    container_name: crud-backend
+    ports:
+      - "8085:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/exam-2400090175
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - crud-network
+
+volumes:
+  postgres_data:
+
+networks:
+  crud-network:
+    driver: bridge
